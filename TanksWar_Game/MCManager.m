@@ -8,7 +8,11 @@
 
 #import "MCManager.h"
 
-#define MCLog(...) NSLog(...)
+#ifdef DEBUG
+#define NSLog(...) printf("%s %d行:%s\n",__FUNCTION__,__LINE__,[[NSString stringWithFormat:__VA_ARGS__] UTF8String]);
+#else
+#define NSLog(...)
+#endif
 
 static NSString * const serviceTypeString = @"mc-service";   //标识符
 
@@ -165,7 +169,7 @@ static MCManager *manager;
 
 //小数据的接收
 - (void)session:(MCSession *)session didReceiveData:(NSData *)data fromPeer:(MCPeerID *)peerID {
-    NSLog(@"mc-小数据接收");
+//    NSLog(@"mc-小数据接收");
     if (_receiveData) {
         _receiveData(data);
     }

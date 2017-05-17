@@ -14,6 +14,12 @@
 #import "GameOverScene.h"
 #import "HpNode.h"
 
+#ifdef DEBUG
+#define NSLog(...) printf("%s %d行:%s\n",__FUNCTION__,__LINE__,[[NSString stringWithFormat:__VA_ARGS__] UTF8String]);
+#else
+#define NSLog(...)
+#endif
+
 @interface GameScene ()<SKPhysicsContactDelegate,JoystickDelegate>
 {
     Joystick *_joystick;
@@ -80,6 +86,7 @@
                                       @"direction":@(_player.direction)};
         NSDictionary *dataPacket = @{@"statePacket":statePacket};
         NSData *data = [NSJSONSerialization dataWithJSONObject:dataPacket options:NSJSONWritingPrettyPrinted error:nil];
+        NSLog(@"%f",(float)data.length/1024);
         [[MCManager shareInstance] sendData:data finish:nil];
     }
     
@@ -149,11 +156,13 @@
     
     //接收帧数据包
     [MCManager shareInstance].receiveData = ^(NSData *data) {
+        
+        NSDictionary *dataPacket = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil];
+        NSDictionary *statePacket = dataPacket[@"statePacket"];
+        NSDictionary *attackPacket = dataPacket[@"attackPacket"];
+        NSDictionary *gameOverPacket = dataPacket[@"gameOverPacket"];
+
         dispatch_async(dispatch_get_main_queue(), ^{
-            NSDictionary *dataPacket = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingAllowFragments error:nil];
-            NSDictionary *statePacket = dataPacket[@"statePacket"];
-            NSDictionary *attackPacket = dataPacket[@"attackPacket"];
-            NSDictionary *gameOverPacket = dataPacket[@"gameOverPacket"];
             
             if (statePacket) {
                 CGFloat width = [statePacket[@"width"] floatValue];
@@ -184,7 +193,7 @@
                 SKTransition *reveal = [SKTransition flipHorizontalWithDuration:0.5];
                 [self.view presentScene:gameOverScene transition:reveal];
             }
-            NSLog(@"receive: %@",dataPacket);
+//            NSLog(@"receive: %@",dataPacket);
         });
     };
 }
